@@ -120,7 +120,7 @@ class Agent(object):
 
                     # Obtain the initial observation by resetting the environment.
                     self.reset_states()
-                    observation = deepcopy(env.reset())
+                    observation = deepcopy(env.reset()[0]) # TODO: may need to remove the 0 index
                     if self.processor is not None:
                         observation = self.processor.process_observation(observation)
                     assert observation is not None
@@ -137,13 +137,13 @@ class Agent(object):
                             action = self.processor.process_action(action)
                         callbacks.on_action_begin(action)
                         observation, reward, done, info = env.step(action)
-                        observation = deepcopy(observation)
+                        observation = deepcopy(observation[0])
                         if self.processor is not None:
                             observation, reward, done, info = self.processor.process_step(observation, reward, done, info)
                         callbacks.on_action_end(action)
                         if done:
                             warnings.warn('Env ended before {} random steps could be performed at the start. You should probably lower the `nb_max_start_steps` parameter.'.format(nb_random_start_steps))
-                            observation = deepcopy(env.reset())
+                            observation = deepcopy(env.reset()[0])
                             if self.processor is not None:
                                 observation = self.processor.process_observation(observation)
                             break
@@ -157,7 +157,11 @@ class Agent(object):
                 callbacks.on_step_begin(episode_step)
                 # This is were all of the work happens. We first perceive and compute the action
                 # (forward step) and then use the reward to improve (backward step).
-                action = self.forward(observation)
+                # import pdb; pdb.set_trace()
+                print
+                print "observation shape:", len(observation)
+                print
+                action = self.forward(observation[0])
                 if self.processor is not None:
                     action = self.processor.process_action(action)
                 reward = 0.
@@ -166,7 +170,7 @@ class Agent(object):
                 for _ in range(action_repetition):
                     callbacks.on_action_begin(action)
                     observation, r, done, info = env.step(action)
-                    observation = deepcopy(observation)
+                    observation = deepcopy(observation[0])
                     if self.processor is not None:
                         observation, r, done, info = self.processor.process_step(observation, r, done, info)
                     for key, value in info.items():
@@ -203,6 +207,7 @@ class Agent(object):
                     # resetting the environment. We need to pass in `terminal=False` here since
                     # the *next* state, that is the state of the newly reset environment, is
                     # always non-terminal by convention.
+
                     self.forward(observation)
                     self.backward(0., terminal=False)
 
@@ -271,7 +276,7 @@ class Agent(object):
 
             # Obtain the initial observation by resetting the environment.
             self.reset_states()
-            observation = deepcopy(env.reset())
+            observation = deepcopy(env.reset()[0])
             if self.processor is not None:
                 observation = self.processor.process_observation(observation)
             assert observation is not None
@@ -288,13 +293,13 @@ class Agent(object):
                     action = self.processor.process_action(action)
                 callbacks.on_action_begin(action)
                 observation, r, done, info = env.step(action)
-                observation = deepcopy(observation)
+                observation = deepcopy(observation[0])
                 if self.processor is not None:
                     observation, r, done, info = self.processor.process_step(observation, r, done, info)
                 callbacks.on_action_end(action)
                 if done:
                     warnings.warn('Env ended before {} random steps could be performed at the start. You should probably lower the `nb_max_start_steps` parameter.'.format(nb_random_start_steps))
-                    observation = deepcopy(env.reset())
+                    observation = deepcopy(env.reset()[0])
                     if self.processor is not None:
                         observation = self.processor.process_observation(observation)
                     break
@@ -312,7 +317,7 @@ class Agent(object):
                 for _ in range(action_repetition):
                     callbacks.on_action_begin(action)
                     observation, r, d, info = env.step(action)
-                    observation = deepcopy(observation)
+                    observation = deepcopy(observation[0])
                     if self.processor is not None:
                         observation, r, d, info = self.processor.process_step(observation, r, d, info)
                     callbacks.on_action_end(action)
@@ -417,7 +422,7 @@ class Agent(object):
     @property
     def layers(self):
         """Returns all layers of the underlying model(s).
-        
+
         If the concrete implementation uses multiple internal models,
         this method returns them in a concatenated list.
         """
@@ -558,7 +563,7 @@ class Env(object):
     def reset(self):
         """
         Resets the state of the environment and returns an initial observation.
-        
+
         # Returns
             observation (object): The initial observation of the space. Initial reward is assumed to be 0.
         """
@@ -567,8 +572,8 @@ class Env(object):
     def render(self, mode='human', close=False):
         """Renders the environment.
         The set of supported modes varies per environment. (And some
-        environments do not support rendering at all.) 
-        
+        environments do not support rendering at all.)
+
         # Arguments
             mode (str): The mode to render with.
             close (bool): Close all open renderings.
@@ -584,7 +589,7 @@ class Env(object):
 
     def seed(self, seed=None):
         """Sets the seed for this env's random number generator(s).
-        
+
         # Returns
             Returns the list of seeds used in this env's random number generators
         """

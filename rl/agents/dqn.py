@@ -632,6 +632,7 @@ class NAFAgent(AbstractDQNAgent):
         return action
 
     def forward(self, observation):
+        # print "in forward, observation shape", observation.shape
         # Select an action.
         state = self.memory.get_recent_state(observation)
         action = self.select_action(state)
